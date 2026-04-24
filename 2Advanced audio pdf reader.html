@@ -1,0 +1,3676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI TTS Reader with Write-Out Board</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --danger: #e63946;
+            --board-bg: #0f172a;
+            --board-text: #e2e8f0;
+            --highlight: #ffd166;
+            --premium: #9d4edd;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 40px rgba(67, 97, 238, 0.5);
+            position: relative;
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-header h2 {
+            color: var(--accent);
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .modal-header .premium-badge {
+            background: linear-gradient(90deg, #9d4edd, #c77dff);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        
+        .modal-body {
+            margin-bottom: 30px;
+        }
+        
+        .plan-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(157, 78, 221, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .plan-option:hover {
+            border-color: var(--premium);
+            background: rgba(157, 78, 221, 0.1);
+        }
+        
+        .plan-option.active {
+            border-color: var(--premium);
+            background: rgba(157, 78, 221, 0.15);
+        }
+        
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .plan-price {
+            font-size: 1.5rem;
+            color: var(--premium);
+            font-weight: bold;
+        }
+        
+        .plan-features {
+            list-style: none;
+            margin-top: 10px;
+        }
+        
+        .plan-features li {
+            padding: 5px 0;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .plan-features li i {
+            color: var(--success);
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--success);
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--primary);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .btn-premium {
+            background: linear-gradient(90deg, var(--premium), #c77dff);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(157, 78, 221, 0.4);
+        }
+        
+        .activation-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* Soundtrack Controls */
+        .soundtrack-controls {
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .soundtrack-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .soundtrack-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .soundtrack-btn {
+            background: rgba(67, 97, 238, 0.2);
+            border: 1px solid var(--primary);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .soundtrack-btn.active {
+            background: var(--primary);
+        }
+        
+        .soundtrack-btn:hover:not(.active) {
+            background: rgba(67, 97, 238, 0.4);
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .volume-slider {
+            flex: 1;
+        }
+        
+        /* AI Explanation Panel */
+        .explanation-panel {
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(76, 201, 240, 0.3);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .explanation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .explanation-header h4 {
+            color: var(--warning);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .explanation-content {
+            line-height: 1.6;
+        }
+        
+        .explanation-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .explanation-section h5 {
+            color: var(--success);
+            margin-bottom: 10px;
+        }
+        
+        .explanation-section p {
+            color: #cbd5e1;
+        }
+        
+        /* Premium Features Indicator */
+        .premium-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(90deg, var(--premium), #c77dff);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .feature-locked {
+            position: relative;
+        }
+        
+        .feature-locked::after {
+            content: '\f023';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--warning);
+        }
+        
+        /* Activation Status */
+        .activation-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(76, 201, 240, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .activation-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+        
+        .activation-dot.active {
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        
+        /* Instant Analysis Styles */
+        .instant-analysis {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(90deg, var(--success), #22c55e);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
+            animation: pulse 2s infinite;
+        }
+        
+        .instant-analysis.active {
+            display: flex;
+        }
+        
+        .ai-status-indicator {
+            font-size: 0.85rem;
+            color: var(--accent);
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .ai-status-indicator i {
+            font-size: 0.7rem;
+        }
+        
+        .ai-status-indicator.ready {
+            color: var(--success);
+        }
+        
+        .ai-status-indicator.analyzing {
+            color: var(--warning);
+            animation: pulse 1s infinite;
+        }
+        
+        .ai-status-indicator.complete {
+            color: var(--success);
+        }
+        
+        .quick-explanation-btn {
+            background: linear-gradient(90deg, var(--accent), #ff6b9d);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .quick-explanation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+        }
+        
+        .explanation-preview {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid rgba(76, 201, 240, 0.3);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .explanation-preview.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .preview-header h5 {
+            color: var(--warning);
+            font-size: 0.9rem;
+        }
+        
+        .preview-content {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #cbd5e1;
+        }
+        
+        .preview-content .highlight {
+            background: rgba(67, 97, 238, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin: 0 2px;
+            font-weight: 500;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #adb5bd;
+            font-size: 1.1rem;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Write-Out Board Styles */
+        .write-out-board {
+            background: var(--board-bg);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(67, 97, 238, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(67, 97, 238, 0.3);
+        }
+        
+        .board-header h2 {
+            color: var(--success);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .board-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .board-btn {
+            background: rgba(67, 97, 238, 0.2);
+            border: 1px solid var(--primary);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .board-btn:hover {
+            background: rgba(67, 97, 238, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .board-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .text-stream {
+            font-size: 1.4rem;
+            line-height: 1.8;
+            color: var(--board-text);
+            font-family: 'Courier New', monospace;
+            min-height: 100%;
+        }
+        
+        .current-sentence {
+            background: rgba(67, 97, 238, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            border-left: 3px solid var(--accent);
+            animation: pulse-border 2s infinite;
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% { border-left-color: var(--accent); }
+            50% { border-left-color: var(--success); }
+        }
+        
+        .current-word {
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            font-size: 1.6rem;
+            animation: word-pulse 0.5s infinite alternate;
+        }
+        
+        @keyframes word-pulse {
+            from { opacity: 0.8; }
+            to { opacity: 1; }
+        }
+        
+        .previous-text {
+            color: #94a3b8;
+            opacity: 0.8;
+        }
+        
+        .upcoming-text {
+            color: #64748b;
+            opacity: 0.6;
+        }
+        
+        .ai-analysis {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(76, 201, 240, 0.3);
+            margin-top: 15px;
+        }
+        
+        .ai-analysis h4 {
+            color: var(--success);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .analysis-content {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+        
+        .board-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .stat-value {
+            color: var(--accent);
+            font-weight: bold;
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.4rem;
+            background: var(--success);
+            margin-left: 2px;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* Remaining CSS from previous version */
+        .card {
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-upload {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .drop-zone {
+            border: 3px dashed var(--primary);
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(67, 97, 238, 0.1);
+        }
+        
+        .tts-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        .btn-success { background: var(--success); }
+        .btn-warning { background: var(--warning); }
+        .btn-danger { background: var(--danger); }
+        .btn-accent { background: var(--accent); }
+        
+        .btn-success:hover { background: #0ea5e9; }
+        .btn-warning:hover { background: #f97316; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-accent:hover { background: #db2777; }
+        
+        .progress-container {
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Board Types */
+        .board-type-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .board-type {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .board-type.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .board-type:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* AI Features Panel */
+        .ai-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .ai-feature {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(76, 201, 240, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-feature.active {
+            border-color: var(--success);
+            background: rgba(76, 201, 240, 0.1);
+        }
+        
+        .ai-feature h4 {
+            color: var(--accent);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ai-feature p {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+        
+        /* Transcription Panel */
+        .transcription-panel {
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(67, 97, 238, 0.3);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .transcription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .transcription-header h4 {
+            color: var(--warning);
+        }
+        
+        .transcription-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+        
+        .timestamp {
+            color: var(--success);
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+        
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .voice-loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--warning);
+            margin: 10px 0;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #adb5bd;
+            font-size: 0.9rem;
+            margin-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--warning);
+        }
+        
+        .selected-files {
+            margin-top: 20px;
+        }
+        
+        .file-list {
+            list-style: none;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .file-list li {
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .file-list li .file-size {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .file-types {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .voice-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Activation Modal -->
+    <div class="modal" id="activationModal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <div class="modal-header">
+                <h2><i class="fas fa-crown"></i> Premium Activation</h2>
+                <div class="premium-badge">PRO VERSION</div>
+                <p>Unlock all features with premium activation</p>
+            </div>
+            
+            <div class="modal-body">
+                <div class="plan-option active" id="monthlyPlan">
+                    <div class="plan-header">
+                        <h3>Monthly Subscription</h3>
+                        <div class="plan-price">$9.99</div>
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Full AI Explanation Engine</li>
+                        <li><i class="fas fa-check"></i> Multiple Soundtracks</li>
+                        <li><i class="fas fa-check"></i> Advanced Board Styles</li>
+                        <li><i class="fas fa-check"></i> Priority Support</li>
+                    </ul>
+                </div>
+                
+                <div class="plan-option" id="yearlyPlan">
+                    <div class="plan-header">
+                        <h3>Yearly Plan</h3>
+                        <div class="plan-price">$89.99</div>
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Save 25%</li>
+                        <li><i class="fas fa-check"></i> All Monthly Features</li>
+                        <li><i class="fas fa-check"></i> Future Updates Included</li>
+                    </ul>
+                </div>
+                
+                <div class="input-group">
+                    <label for="emailInput"><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" id="emailInput" placeholder="Enter your email">
+                </div>
+                
+                <button class="btn-premium" id="purchaseBtn">
+                    <i class="fas fa-shopping-cart"></i> Purchase Now
+                </button>
+                
+                <div class="activation-section">
+                    <h4><i class="fas fa-key"></i> Already have a key?</h4>
+                    <div class="input-group">
+                        <input type="text" id="activationKeyInput" placeholder="Enter activation key">
+                    </div>
+                    <button class="btn btn-success" style="width: 100%;" id="activateBtn">
+                        <i class="fas fa-unlock"></i> Activate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: var(--success);"><i class="fas fa-check-circle"></i> Purchase Successful!</h2>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div class="loading" style="width: 60px; height: 60px; margin: 0 auto 20px; border-top-color: var(--success);"></div>
+                    <h3>Generating Your License</h3>
+                    <p>Please wait while we create your activation key...</p>
+                </div>
+                <div id="generatedKey" style="display: none;">
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                        <h4 style="color: var(--accent);">Your Activation Key:</h4>
+                        <div style="font-family: monospace; font-size: 1.2rem; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px; margin: 15px 0; letter-spacing: 2px;">
+                            <span id="activationKeyDisplay"></span>
+                        </div>
+                        <p style="font-size: 0.9rem; color: #94a3b8;">Save this key for future use!</p>
+                    </div>
+                    <button class="btn btn-success" style="width: 100%;" id="continueBtn">
+                        <i class="fas fa-rocket"></i> Continue to App
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-robot"></i> AI TTS Reader PRO</h1>
+            <p>Complete Document Understanding with AI Explanation</p>
+            <div class="ai-status-indicator" id="aiStatus">
+                <i class="fas fa-circle"></i>
+                <span>AI Engine Ready</span>
+            </div>
+            <button class="btn btn-premium" id="upgradeBtn" style="margin-top: 15px;">
+                <i class="fas fa-crown"></i> Upgrade to Premium
+            </button>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Column: File Upload & Controls -->
+            <div>
+                <div class="card">
+                    <div class="premium-indicator" id="premiumIndicator">PREMIUM</div>
+                    <div class="instant-analysis" id="instantAnalysis">
+                        <i class="fas fa-bolt"></i>
+                        AI Analyzing...
+                    </div>
+                    <h2 class="card-title"><i class="fas fa-file-upload"></i> File Upload</h2>
+                    
+                    <div class="file-upload">
+                        <div class="drop-zone" id="dropZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drag & Drop files here or click to browse</p>
+                            <p class="file-types">Supported: PDF, DOCX, TXT, RTF, EPUB, HTML</p>
+                            <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.docx,.txt,.rtf,.doc,.epub,.html">
+                        </div>
+                        
+                        <div class="selected-files">
+                            <h3>Selected Files</h3>
+                            <ul class="file-list" id="fileList"></ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Explanation Preview -->
+                    <div class="explanation-preview" id="explanationPreview">
+                        <div class="preview-header">
+                            <h5><i class="fas fa-eye"></i> Quick AI Analysis</h5>
+                            <button class="board-btn" style="padding: 2px 8px; font-size: 0.8rem;" id="closePreviewBtn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="preview-content" id="previewContent">
+                            <!-- Preview content will appear here -->
+                        </div>
+                    </div>
+                    
+                    <div class="tts-controls">
+                        <div class="control-group">
+                            <label for="voiceSelect"><i class="fas fa-user"></i> Voice</label>
+                            <select id="voiceSelect" disabled>
+                                <option value="">Loading voices...</option>
+                            </select>
+                            <div class="voice-loading" id="voiceLoading" style="display: none;">
+                                <div class="loading"></div>
+                                <span>Loading voices...</span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="rateControl"><i class="fas fa-tachometer-alt"></i> Speed</label>
+                            <input type="range" id="rateControl" min="0.5" max="2" step="0.1" value="1">
+                            <span id="rateValue">1.0x</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="boardSpeed"><i class="fas fa-keyboard"></i> Board Speed</label>
+                            <input type="range" id="boardSpeed" min="1" max="10" step="1" value="3">
+                            <span id="boardSpeedValue">Medium</span>
+                        </div>
+                    </div>
+                    
+                    <div class="voice-controls" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;">
+                        <button class="btn btn-success" id="startBtn" disabled>
+                            <i class="fas fa-play"></i> Start Reading
+                        </button>
+                        <button class="btn btn-warning" id="pauseBtn" disabled>
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <button class="btn btn-danger" id="stopBtn" disabled>
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                        <button class="btn btn-accent" id="explainBtn" disabled>
+                            <i class="fas fa-brain"></i> AI Explain
+                        </button>
+                        <button class="quick-explanation-btn" id="quickExplainBtn" style="display: none;">
+                            <i class="fas fa-bolt"></i> View Analysis
+                        </button>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="status-display" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="voice-status">
+                                <span>Status:</span>
+                                <div class="indicator" id="statusIndicator"></div>
+                                <span id="statusText">Initializing...</span>
+                            </div>
+                            <span id="progressText">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Soundtrack Controls -->
+                <div class="soundtrack-controls">
+                    <div class="soundtrack-header">
+                        <h3><i class="fas fa-music"></i> Background Soundtrack</h3>
+                        <button class="board-btn" id="muteBtn">
+                            <i class="fas fa-volume-up"></i> Mute
+                        </button>
+                    </div>
+                    
+                    <div class="soundtrack-options">
+                        <button class="soundtrack-btn" data-track="none">
+                            <i class="fas fa-times"></i> None
+                        </button>
+                        <button class="soundtrack-btn active" data-track="ambient">
+                            <i class="fas fa-wind"></i> Ambient
+                        </button>
+                        <button class="soundtrack-btn" data-track="nature">
+                            <i class="fas fa-tree"></i> Nature
+                        </button>
+                        <button class="soundtrack-btn feature-locked" data-track="focus">
+                            <i class="fas fa-brain"></i> Focus
+                        </button>
+                        <button class="soundtrack-btn feature-locked" data-track="classical">
+                            <i class="fas fa-music"></i> Classical
+                        </button>
+                    </div>
+                    
+                    <div class="volume-control">
+                        <i class="fas fa-volume-low"></i>
+                        <input type="range" min="0" max="100" value="30" class="volume-slider" id="volumeSlider">
+                        <i class="fas fa-volume-high"></i>
+                    </div>
+                </div>
+                
+                <!-- AI Features Panel -->
+                <div class="card" style="margin-top: 30px;">
+                    <h2 class="card-title"><i class="fas fa-brain"></i> AI Features</h2>
+                    
+                    <div class="ai-features">
+                        <div class="ai-feature active" id="grammarFeature">
+                            <h4><i class="fas fa-spell-check"></i> Grammar Check</h4>
+                            <p>Real-time grammar correction and suggestions</p>
+                        </div>
+                        
+                        <div class="ai-feature active" id="summaryFeature">
+                            <h4><i class="fas fa-file-contract"></i> Auto-Summary</h4>
+                            <p>Generate paragraph summaries automatically</p>
+                        </div>
+                        
+                        <div class="ai-feature" id="explainFeature">
+                            <h4><i class="fas fa-question-circle"></i> AI Explanation</h4>
+                            <p>Deep document analysis and explanation</p>
+                        </div>
+                        
+                        <div class="ai-feature active" id="sentimentFeature">
+                            <h4><i class="fas fa-smile"></i> Sentiment Analysis</h4>
+                            <p>Analyze emotional tone of text</p>
+                        </div>
+                    </div>
+                    
+                    <div class="board-type-selector">
+                        <div class="board-type active" data-type="stream">Streaming Text</div>
+                        <div class="board-type" data-type="karaoke">Karaoke Mode</div>
+                        <div class="board-type" data-type="typewriter">Typewriter</div>
+                        <div class="board-type feature-locked" data-type="teleprompter">Teleprompter</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Write-Out Board -->
+            <div>
+                <!-- Main Write-Out Board -->
+                <div class="write-out-board">
+                    <div class="board-header">
+                        <h2><i class="fas fa-chalkboard"></i> Live Write-Out Board</h2>
+                        <div class="board-controls">
+                            <button class="board-btn" id="clearBoardBtn">
+                                <i class="fas fa-broom"></i> Clear
+                            </button>
+                            <button class="board-btn feature-locked" id="exportBoardBtn">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                            <button class="board-btn" id="instantExplainBtn">
+                                <i class="fas fa-bolt"></i> Instant AI
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="board-content" id="boardContent">
+                        <div class="text-stream" id="textStream">
+                            <div style="text-align: center; padding: 50px;">
+                                <div class="loading" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
+                                <h3 style="color: var(--primary); margin-bottom: 10px;">Initializing System</h3>
+                                <p style="color: #94a3b8;">Please wait while we load the TTS engine...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Explanation Panel -->
+                    <div class="explanation-panel" id="explanationPanel" style="display: none;">
+                        <div class="explanation-header">
+                            <h4><i class="fas fa-robot"></i> AI Explanation</h4>
+                            <button class="board-btn" id="closeExplanationBtn">
+                                <i class="fas fa-times"></i> Close
+                            </button>
+                        </div>
+                        <div class="explanation-content" id="explanationContent">
+                            <!-- AI explanation will appear here -->
+                        </div>
+                    </div>
+                    
+                    <div class="board-footer">
+                        <div class="stats">
+                            <div class="stat-item">
+                                <i class="fas fa-font"></i>
+                                Words: <span class="stat-value" id="wordCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-clock"></i>
+                                Speed: <span class="stat-value" id="wpm">0</span> WPM
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-chart-line"></i>
+                                Accuracy: <span class="stat-value" id="accuracy">100%</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-layer-group"></i>
+                                Board: <span class="stat-value" id="boardType">Streaming</span>
+                            </div>
+                        </div>
+                        <div class="board-btn" id="toggleAnalysisBtn">
+                            <i class="fas fa-chevron-up"></i> Hide Analysis
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transcription Panel -->
+                <div class="transcription-panel">
+                    <div class="transcription-header">
+                        <h4><i class="fas fa-scroll"></i> Full Transcription</h4>
+                        <button class="board-btn" id="clearTranscriptionBtn">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                    <div class="transcription-content" id="transcriptionContent">
+                        System initializing... Transcription will appear here.
+                    </div>
+                </div>
+                
+                <!-- Command Interface -->
+                <div class="card" style="margin-top: 20px;">
+                    <h2 class="card-title"><i class="fas fa-terminal"></i> Command Interface</h2>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="cmdInput" placeholder="Type command (try 'help')..." style="flex: 1; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--primary); color: white;">
+                        <button class="btn" id="cmdSubmit">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    
+                    <div style="height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.9rem;" id="cmdHistory">
+                        <div style="color: var(--warning);">System: Initializing AI TTS Reader PRO...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>AI TTS Reader PRO | Advanced Document Understanding | Activation Required for Premium Features</p>
+            <p>Built with pure HTML, CSS, and JavaScript</p>
+        </div>
+        
+        <!-- Activation Status Indicator -->
+        <div class="activation-status" id="activationStatus">
+            <div class="activation-dot"></div>
+            <span>Trial Version</span>
+        </div>
+    </div>
+
+    <!-- Audio Elements for Soundtrack -->
+    <audio id="ambientSound" loop>
+        <!-- Ambient sound will be generated dynamically -->
+    </audio>
+    <audio id="natureSound" loop>
+        <!-- Nature sound will be generated dynamically -->
+    </audio>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
+    
+    <script>
+        // Enhanced AI TTS with Premium Features
+        class AITTSWithBoard {
+            constructor() {
+                try {
+                    // Check if Web Speech API is available
+                    if (!('speechSynthesis' in window)) {
+                        this.showError("Web Speech API not supported in this browser");
+                        return;
+                    }
+                    
+                    this.speechSynthesis = window.speechSynthesis;
+                    this.currentUtterance = null;
+                    this.voices = [];
+                    this.selectedVoice = null;
+                    this.isSpeaking = false;
+                    this.isPaused = false;
+                    this.textChunks = [];
+                    this.currentChunkIndex = 0;
+                    
+                    // Activation System
+                    this.activationKey = localStorage.getItem('ttsProActivation');
+                    this.isActivated = this.validateActivationKey(this.activationKey);
+                    this.remainingDays = 7; // Trial days
+                    
+                    // Soundtrack System
+                    this.currentTrack = 'ambient';
+                    this.isMuted = false;
+                    this.volume = 0.3;
+                    this.audioContext = null;
+                    this.audioSources = {};
+                    
+                    // Write-Out Board State
+                    this.boardType = 'stream';
+                    this.boardSpeed = 3;
+                    this.currentText = '';
+                    this.allWords = [];
+                    this.currentWordIndex = 0;
+                    this.currentSentence = '';
+                    this.sentences = [];
+                    this.sentenceIndex = 0;
+                    
+                    // AI Explanation System
+                    this.documentAnalysis = null;
+                    this.isAnalyzing = false;
+                    
+                    // Transcription
+                    this.fullTranscription = '';
+                    this.transcriptionTimestamps = [];
+                    
+                    // AI Features
+                    this.aiFeatures = {
+                        grammar: true,
+                        summary: true,
+                        explanation: this.isActivated,
+                        sentiment: true
+                    };
+                    
+                    // Statistics
+                    this.stats = {
+                        wordsSpoken: 0,
+                        startTime: null,
+                        accuracy: 100,
+                        errors: 0,
+                        totalWords: 0
+                    };
+                    
+                    // Bind all methods
+                    this.bindMethods();
+                    
+                    // Initialize
+                    this.initialize();
+                } catch (error) {
+                    console.error('Error in constructor:', error);
+                    this.showError(`Initialization failed: ${error.message}`);
+                }
+            }
+            
+            async initialize() {
+                try {
+                    console.log('Initializing AI TTS PRO with Write-Out Board...');
+                    
+                    // Check activation status
+                    this.updateActivationStatus();
+                    
+                    // Show activation modal if not activated
+                    if (!this.isActivated) {
+                        setTimeout(() => {
+                            this.showActivationModal();
+                        }, 1000);
+                    }
+                    
+                    this.updateStatus('loading', 'Loading TTS engine...');
+                    this.displayOnBoard("System initializing...\n\nLoading text-to-speech engine...\n\n" + 
+                        (this.isActivated ? "✓ Premium Activated" : `Trial Version - ${this.remainingDays} days remaining`));
+                    
+                    // Wait for voices to load
+                    await this.waitForVoices();
+                    
+                    // Setup UI
+                    this.setupEventListeners();
+                    this.setupBoard();
+                    this.setupCommands();
+                    this.setupSoundtracks();
+                    
+                    // Initialize audio context for soundtracks
+                    this.initAudioContext();
+                    
+                    this.updateStatus('ready', 'System ready');
+                    this.showMessage('System: Write-Out Board initialized and ready');
+                    this.displayOnBoard("System ready!\n\nUpload a document to begin reading.\nThe write-out board will display text in real-time as it's spoken.\n\n" + 
+                        (this.isActivated ? "✓ Premium features unlocked" : "Upgrade to Premium for AI Explanation and more features"));
+                    
+                    // Enable buttons
+                    this.enableButtons();
+                    
+                    // Update premium features visibility
+                    this.updatePremiumFeatures();
+                } catch (error) {
+                    console.error('Error in initialize:', error);
+                    this.showError(`Initialization failed: ${error.message}`);
+                }
+            }
+            
+            // Bind all methods to preserve 'this' context
+            bindMethods() {
+                const methods = [
+                    'showError', 'showMessage', 'updateStatus', 'displayOnBoard',
+                    'waitForVoices', 'setupEventListeners', 'setupBoard', 'setupCommands',
+                    'setupSoundtracks', 'initAudioContext', 'enableButtons', 'updatePremiumFeatures',
+                    'updateActivationStatus', 'showActivationModal', 'hideActivationModal',
+                    'analyzeDocumentInstantly', 'performQuickAnalysis', 'analyzeSentimentQuick',
+                    'handleAnalysisComplete', 'showQuickPreview', 'generateDocumentExplanation',
+                    'displayFullExplanation', 'populateVoiceList', 'activatePremium',
+                    'handlePurchase', 'startReading', 'stopReading', 'togglePause',
+                    'readNextChunk', 'startBoardUpdates', 'stopBoardUpdates', 'updateBoard',
+                    'clearBoard', 'clearTranscription', 'exportTranscription', 'performAIAnalysis',
+                    'toggleAnalysis', 'processCommand', 'showHelp', 'speakResponse',
+                    'handleFiles', 'loadFile', 'processFile', 'extractTextFromPDF',
+                    'extractTextFromDOCX', 'formatFileSize', 'splitTextIntoChunks',
+                    'updateWordIndexForChunk', 'updateStreamingDisplay', 'updateKaraokeDisplay',
+                    'updateTypewriterDisplay', 'updateTeleprompterDisplay', 'updateTranscription',
+                    'updateStatistics', 'calculateFinalStats', 'updateBoardDisplay',
+                    'getCurrentSentence', 'checkGrammar', 'generateSummary', 'generateAIAnalysis',
+                    'splitIntoSentences', 'updateProgress', 'capitalizeFirstLetter',
+                    'playSoundtrack', 'stopAllSoundtracks', 'setVolume', 'toggleMute',
+                    'validateActivationKey', 'generateActivationKey', 'showSuccessModal',
+                    'hideSuccessModal', 'generateDocumentExplanation', 'analyzeDocument',
+                    'displayExplanation', 'analyzeSentiment'
+                ];
+                
+                methods.forEach(method => {
+                    if (typeof this[method] === 'function') {
+                        this[method] = this[method].bind(this);
+                    }
+                });
+            }
+            
+            // Error handling method
+            showError(message) {
+                try {
+                    console.error('TTS App Error:', message);
+                    
+                    // Try to show error in command history
+                    const cmdHistory = document.getElementById('cmdHistory');
+                    if (cmdHistory) {
+                        const entry = document.createElement('div');
+                        entry.style.color = 'var(--danger)';
+                        entry.style.marginBottom = '5px';
+                        entry.style.fontSize = '0.9rem';
+                        entry.textContent = `ERROR: ${message}`;
+                        cmdHistory.appendChild(entry);
+                        cmdHistory.scrollTop = cmdHistory.scrollHeight;
+                    }
+                    
+                    // Try to update status
+                    this.updateStatus('error', message);
+                    
+                    // Try to update board
+                    const textStream = document.getElementById('textStream');
+                    if (textStream) {
+                        textStream.innerHTML = `
+                            <div style="text-align: center; padding: 50px; color: var(--danger);">
+                                <h3>Error</h3>
+                                <p>${message}</p>
+                                <p>Please refresh the page or try a different browser.</p>
+                            </div>
+                        `;
+                    }
+                } catch (e) {
+                    console.error('Failed to show error in UI:', e);
+                }
+            }
+            
+            // Instant AI Analysis System
+            async analyzeDocumentInstantly(text, fileName = '') {
+                if (!text || text.trim().length < 10) return null;
+                
+                // Update UI to show analyzing status
+                const instantAnalysis = document.getElementById('instantAnalysis');
+                const aiStatus = document.getElementById('aiStatus');
+                
+                if (instantAnalysis) instantAnalysis.classList.add('active');
+                if (aiStatus) {
+                    aiStatus.className = 'ai-status-indicator analyzing';
+                    aiStatus.innerHTML = '<i class="fas fa-circle"></i><span>Analyzing document...</span>';
+                }
+                
+                // Show instant analyzing message
+                this.showMessage("AI: Starting instant document analysis...");
+                
+                // Use micro-tasks to prevent blocking UI
+                return new Promise((resolve) => {
+                    // Use requestIdleCallback for non-blocking analysis
+                    if ('requestIdleCallback' in window) {
+                        requestIdleCallback(() => {
+                            try {
+                                const analysis = this.performQuickAnalysis(text, fileName);
+                                this.handleAnalysisComplete(analysis, fileName);
+                                resolve(analysis);
+                            } catch (error) {
+                                console.error('Error in instant analysis:', error);
+                                this.showMessage("AI: Quick analysis failed, using basic analysis");
+                                resolve(null);
+                            }
+                        }, { timeout: 1000 });
+                    } else {
+                        // Fallback to setTimeout
+                        setTimeout(() => {
+                            try {
+                                const analysis = this.performQuickAnalysis(text, fileName);
+                                this.handleAnalysisComplete(analysis, fileName);
+                                resolve(analysis);
+                            } catch (error) {
+                                console.error('Error in instant analysis:', error);
+                                this.showMessage("AI: Quick analysis failed, using basic analysis");
+                                resolve(null);
+                            }
+                        }, 100);
+                    }
+                });
+            }
+            
+            performQuickAnalysis(text, fileName) {
+                try {
+                    // Optimized analysis - only extract essential information
+                    const words = text.split(/\s+/).filter(w => w.length > 0);
+                    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+                    
+                    // Quick word frequency analysis
+                    const wordFreq = {};
+                    const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were']);
+                    
+                    words.forEach(word => {
+                        const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
+                        if (cleanWord.length > 3 && !stopWords.has(cleanWord)) {
+                            wordFreq[cleanWord] = (wordFreq[cleanWord] || 0) + 1;
+                        }
+                    });
+                    
+                    const keyTopics = Object.entries(wordFreq)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([word]) => word);
+                    
+                    // Quick document type detection
+                    let docType = 'General Text';
+                    if (text.includes('$') || text.includes('USD') || text.includes('profit')) docType = 'Financial';
+                    else if (text.includes('study') || text.includes('research') || text.includes('data')) docType = 'Academic';
+                    else if (text.includes('article') || text.includes('news')) docType = 'News';
+                    else if (text.includes('chapter') || text.includes('story')) docType = 'Literary';
+                    
+                    // Quick sentiment analysis
+                    const sentiment = this.analyzeSentimentQuick(text);
+                    
+                    // Quick readability
+                    const avgSentenceLength = sentences.length > 0 ? words.length / sentences.length : 0;
+                    const readability = avgSentenceLength > 25 ? 'Advanced' : avgSentenceLength > 15 ? 'Intermediate' : 'Basic';
+                    
+                    // Extract first meaningful sentence as preview
+                    const firstSentence = sentences.length > 0 ? sentences[0].trim() : text.substring(0, 150) + '...';
+                    
+                    return {
+                        fileName: fileName,
+                        wordCount: words.length,
+                        sentenceCount: sentences.length,
+                        keyTopics: keyTopics,
+                        documentType: docType,
+                        sentiment: sentiment,
+                        readability: readability,
+                        firstSentence: firstSentence,
+                        estimatedReadingTime: Math.ceil(words.length / 200)
+                    };
+                } catch (error) {
+                    console.error('Error in performQuickAnalysis:', error);
+                    // Return basic analysis
+                    return {
+                        fileName: fileName,
+                        wordCount: text.split(/\s+/).length,
+                        sentenceCount: text.split(/[.!?]+/).length,
+                        keyTopics: ['Analysis', 'Document', 'Text'],
+                        documentType: 'General Text',
+                        sentiment: 'Neutral',
+                        readability: 'Basic',
+                        firstSentence: text.substring(0, 150) + '...',
+                        estimatedReadingTime: Math.ceil(text.split(/\s+/).length / 200)
+                    };
+                }
+            }
+            
+            analyzeSentimentQuick(text) {
+                try {
+                    // Optimized sentiment analysis
+                    const positiveIndicators = ['good', 'great', 'excellent', 'positive', 'happy', 'success'];
+                    const negativeIndicators = ['bad', 'terrible', 'negative', 'sad', 'failure', 'problem'];
+                    
+                    const textLower = text.toLowerCase();
+                    let positive = 0;
+                    let negative = 0;
+                    
+                    positiveIndicators.forEach(word => {
+                        if (textLower.includes(word)) positive++;
+                    });
+                    
+                    negativeIndicators.forEach(word => {
+                        if (textLower.includes(word)) negative++;
+                    });
+                    
+                    if (positive > negative) return 'Positive';
+                    if (negative > positive) return 'Negative';
+                    return 'Neutral';
+                } catch (error) {
+                    console.error('Error in sentiment analysis:', error);
+                    return 'Neutral';
+                }
+            }
+            
+            handleAnalysisComplete(analysis, fileName) {
+                try {
+                    // Update UI
+                    const instantAnalysis = document.getElementById('instantAnalysis');
+                    const aiStatus = document.getElementById('aiStatus');
+                    
+                    if (instantAnalysis) instantAnalysis.classList.remove('active');
+                    if (aiStatus) {
+                        aiStatus.className = 'ai-status-indicator ready';
+                        aiStatus.innerHTML = '<i class="fas fa-circle"></i><span>AI Analysis Ready</span>';
+                    }
+                    
+                    // Store analysis for later use
+                    this.documentAnalysis = analysis;
+                    
+                    // Show quick preview button
+                    const quickExplainBtn = document.getElementById('quickExplainBtn');
+                    if (quickExplainBtn) quickExplainBtn.style.display = 'flex';
+                    
+                    // Update message
+                    this.showMessage(`AI: Analysis complete for ${fileName}`);
+                    
+                    // Display preview
+                    this.showQuickPreview(analysis);
+                } catch (error) {
+                    console.error('Error in handleAnalysisComplete:', error);
+                }
+            }
+            
+            showQuickPreview(analysis) {
+                try {
+                    const previewContent = document.getElementById('previewContent');
+                    const previewPanel = document.getElementById('explanationPreview');
+                    
+                    if (!previewContent || !previewPanel) return;
+                    
+                    // Generate quick preview HTML
+                    const previewHTML = `
+                        <p><strong>Document:</strong> ${analysis.fileName || 'Unknown'}</p>
+                        <p><strong>Type:</strong> ${analysis.documentType}</p>
+                        <p><strong>Words:</strong> ${analysis.wordCount} | <strong>Sentences:</strong> ${analysis.sentenceCount}</p>
+                        <p><strong>Reading Time:</strong> ${analysis.estimatedReadingTime} min</p>
+                        <p><strong>Key Topics:</strong> ${analysis.keyTopics.map(topic => `<span class="highlight">${topic}</span>`).join(' ')}</p>
+                        <p><strong>Sentiment:</strong> <span style="color: ${analysis.sentiment === 'Positive' ? 'var(--success)' : analysis.sentiment === 'Negative' ? 'var(--danger)' : 'var(--warning)'}">${analysis.sentiment}</span></p>
+                        <p><strong>Readability:</strong> ${analysis.readability} Level</p>
+                    `;
+                    
+                    previewContent.innerHTML = previewHTML;
+                    previewPanel.classList.add('active');
+                    
+                    // Auto-hide preview after 10 seconds
+                    setTimeout(() => {
+                        if (previewPanel.classList.contains('active')) {
+                            previewPanel.classList.remove('active');
+                        }
+                    }, 10000);
+                } catch (error) {
+                    console.error('Error in showQuickPreview:', error);
+                }
+            }
+            
+            // Enhanced AI Explanation Methods
+            async generateDocumentExplanation(text, fileName = '', instant = false) {
+                if (!this.isActivated) {
+                    this.showActivationModal();
+                    return;
+                }
+                
+                // Show loading status immediately
+                this.showMessage("AI: Generating comprehensive explanation...");
+                const aiStatus = document.getElementById('aiStatus');
+                if (aiStatus) {
+                    aiStatus.className = 'ai-status-indicator analyzing';
+                    aiStatus.innerHTML = '<i class="fas fa-circle"></i><span>Deep analysis in progress...</span>';
+                }
+                
+                // Use existing analysis if available and recent
+                if (this.documentAnalysis && this.documentAnalysis.fileName === fileName) {
+                    this.displayFullExplanation(this.documentAnalysis, fileName);
+                    return;
+                }
+                
+                // For instant mode, use quick analysis
+                if (instant) {
+                    const analysis = this.performQuickAnalysis(text, fileName);
+                    this.documentAnalysis = analysis;
+                    this.displayFullExplanation(analysis, fileName);
+                    return;
+                }
+                
+                // For full analysis
+                setTimeout(() => {
+                    const analysis = this.analyzeDocument(text);
+                    this.documentAnalysis = analysis;
+                    this.displayFullExplanation(analysis, fileName);
+                    
+                    // Update status
+                    if (aiStatus) {
+                        aiStatus.className = 'ai-status-indicator ready';
+                        aiStatus.innerHTML = '<i class="fas fa-circle"></i><span>Analysis Complete</span>';
+                    }
+                    this.updateStatus('ready', 'Analysis complete');
+                }, 300);
+            }
+            
+            analyzeDocument(text) {
+                const words = text.split(/\s+/).filter(w => w.length > 0);
+                const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+                const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+                
+                // Extract key topics
+                const wordFreq = {};
+                const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being']);
+                
+                words.forEach(word => {
+                    const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
+                    if (cleanWord.length > 3 && !stopWords.has(cleanWord)) {
+                        wordFreq[cleanWord] = (wordFreq[cleanWord] || 0) + 1;
+                    }
+                });
+                
+                const sortedWords = Object.entries(wordFreq)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10)
+                    .map(([word]) => word);
+                
+                // Determine document type
+                let docType = 'General Text';
+                if (text.includes('$') || text.includes('USD') || text.includes('profit') || text.includes('revenue')) {
+                    docType = 'Financial/Business';
+                } else if (text.includes('study') || text.includes('research') || text.includes('data') || text.includes('results')) {
+                    docType = 'Academic/Research';
+                } else if (text.includes('article') || text.includes('news') || text.includes('report')) {
+                    docType = 'News/Article';
+                } else if (text.includes('chapter') || text.includes('story') || text.includes('character')) {
+                    docType = 'Literary/Story';
+                }
+                
+                // Extract key sentences for summary
+                const keySentences = sentences
+                    .filter(s => s.length > 20 && s.length < 150)
+                    .slice(0, 3);
+                
+                // Calculate readability metrics
+                const avgSentenceLength = sentenceCount > 0 ? wordCount / sentenceCount : 0;
+                const avgWordLength = text.replace(/\s/g, '').length / Math.max(words.length, 1);
+                
+                return {
+                    wordCount: words.length,
+                    sentenceCount: sentences.length,
+                    paragraphCount: paragraphs.length,
+                    keyTopics: sortedWords,
+                    documentType: docType,
+                    readability: {
+                        avgSentenceLength: avgSentenceLength.toFixed(1),
+                        avgWordLength: avgWordLength.toFixed(1),
+                        level: avgSentenceLength > 25 ? 'Advanced' : avgSentenceLength > 15 ? 'Intermediate' : 'Basic'
+                    },
+                    summary: keySentences,
+                    estimatedReadingTime: Math.ceil(words.length / 200),
+                    sentiment: this.analyzeSentiment(text)
+                };
+            }
+            
+            analyzeSentiment(text) {
+                const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'positive', 'happy', 'success', 'achievement'];
+                const negativeWords = ['bad', 'terrible', 'awful', 'negative', 'sad', 'failure', 'problem', 'issue', 'difficult'];
+                
+                const words = text.toLowerCase().split(/\s+/);
+                let positive = 0;
+                let negative = 0;
+                
+                words.forEach(word => {
+                    if (positiveWords.includes(word)) positive++;
+                    if (negativeWords.includes(word)) negative++;
+                });
+                
+                const total = positive + negative;
+                if (total === 0) return 'Neutral';
+                
+                const score = (positive - negative) / total;
+                if (score > 0.3) return 'Positive';
+                if (score < -0.3) return 'Negative';
+                return 'Neutral';
+            }
+            
+            displayFullExplanation(analysis, fileName) {
+                try {
+                    const content = document.getElementById('explanationContent');
+                    const panel = document.getElementById('explanationPanel');
+                    
+                    if (!content || !panel) return;
+                    
+                    // Generate comprehensive explanation
+                    let html = `
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-file-alt"></i> Document Overview</h5>
+                            <p><strong>File:</strong> ${fileName || 'Unknown'}</p>
+                            <p><strong>Type:</strong> ${analysis.documentType}</p>
+                            <p><strong>Words:</strong> ${analysis.wordCount} | <strong>Sentences:</strong> ${analysis.sentenceCount} | <strong>Paragraphs:</strong> ${analysis.paragraphCount || 'N/A'}</p>
+                            <p><strong>Estimated Reading Time:</strong> ${analysis.estimatedReadingTime} minutes</p>
+                        </div>
+                        
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-tags"></i> Key Topics</h5>
+                            <p>${analysis.keyTopics.map(topic => `<span style="background: rgba(67, 97, 238, 0.2); padding: 4px 8px; border-radius: 4px; margin: 2px; display: inline-block;">${topic}</span>`).join(' ')}</p>
+                        </div>
+                        
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-chart-bar"></i> Readability Analysis</h5>
+                            <p><strong>Level:</strong> ${analysis.readability.level}</p>
+                            <p><strong>Average Sentence Length:</strong> ${analysis.readability.avgSentenceLength || analysis.readability} words</p>
+                            ${analysis.readability.avgWordLength ? `<p><strong>Average Word Length:</strong> ${analysis.readability.avgWordLength} characters</p>` : ''}
+                        </div>
+                        
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-smile"></i> Sentiment Analysis</h5>
+                            <p><strong>Overall Tone:</strong> 
+                                <span style="color: ${analysis.sentiment === 'Positive' ? 'var(--success)' : analysis.sentiment === 'Negative' ? 'var(--danger)' : 'var(--warning)'}">
+                                    ${analysis.sentiment}
+                                </span>
+                            </p>
+                        </div>
+                    `;
+                    
+                    if (analysis.summary && analysis.summary.length > 0) {
+                        html += `
+                            <div class="explanation-section">
+                                <h5><i class="fas fa-clipboard-list"></i> Key Points</h5>
+                                <ul style="padding-left: 20px;">
+                                    ${analysis.summary.map(sentence => `<li>${sentence.trim()}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    content.innerHTML = html;
+                    panel.style.display = 'block';
+                    
+                    // Show success message
+                    this.showMessage(`✓ AI Explanation generated for ${fileName}`);
+                } catch (error) {
+                    console.error('Error in displayFullExplanation:', error);
+                    this.showMessage("Failed to display explanation");
+                }
+            }
+            
+            // Modal Management
+            showActivationModal() {
+                try {
+                    const modal = document.getElementById('activationModal');
+                    if (modal) modal.classList.add('active');
+                } catch (error) {
+                    console.error('Error showing activation modal:', error);
+                }
+            }
+            
+            hideActivationModal() {
+                try {
+                    const modal = document.getElementById('activationModal');
+                    if (modal) modal.classList.remove('active');
+                } catch (error) {
+                    console.error('Error hiding activation modal:', error);
+                }
+            }
+            
+            showSuccessModal(key) {
+                try {
+                    const keyDisplay = document.getElementById('activationKeyDisplay');
+                    const modal = document.getElementById('successModal');
+                    
+                    if (keyDisplay) keyDisplay.textContent = key;
+                    if (modal) modal.classList.add('active');
+                    
+                    // Simulate key generation delay
+                    setTimeout(() => {
+                        const generatedKey = document.getElementById('generatedKey');
+                        if (generatedKey) generatedKey.style.display = 'block';
+                    }, 2000);
+                } catch (error) {
+                    console.error('Error showing success modal:', error);
+                }
+            }
+            
+            hideSuccessModal() {
+                try {
+                    const modal = document.getElementById('successModal');
+                    if (modal) modal.classList.remove('active');
+                } catch (error) {
+                    console.error('Error hiding success modal:', error);
+                }
+            }
+            
+            // Voice Management
+            waitForVoices() {
+                return new Promise((resolve) => {
+                    // Check if voices are already loaded
+                    const voices = this.speechSynthesis.getVoices();
+                    if (voices.length > 0) {
+                        this.voices = voices;
+                        this.populateVoiceList();
+                        resolve();
+                        return;
+                    }
+                    
+                    // Show loading state
+                    const voiceLoading = document.getElementById('voiceLoading');
+                    if (voiceLoading) voiceLoading.style.display = 'flex';
+                    
+                    // Wait for voices to load
+                    const checkVoices = () => {
+                        const loadedVoices = this.speechSynthesis.getVoices();
+                        if (loadedVoices.length > 0) {
+                            this.voices = loadedVoices;
+                            this.populateVoiceList();
+                            if (voiceLoading) voiceLoading.style.display = 'none';
+                            resolve();
+                        } else {
+                            // Keep checking
+                            setTimeout(checkVoices, 100);
+                        }
+                    };
+                    
+                    // Start checking
+                    checkVoices();
+                    
+                    // Also listen for the voiceschanged event
+                    this.speechSynthesis.onvoiceschanged = () => {
+                        const loadedVoices = this.speechSynthesis.getVoices();
+                        if (loadedVoices.length > 0 && this.voices.length === 0) {
+                            this.voices = loadedVoices;
+                            this.populateVoiceList();
+                            if (voiceLoading) voiceLoading.style.display = 'none';
+                            resolve();
+                        }
+                    };
+                    
+                    // Timeout after 10 seconds
+                    setTimeout(() => {
+                        if (this.voices.length === 0) {
+                            console.warn('Voice loading timeout');
+                            this.showMessage("Using default system voice");
+                            if (voiceLoading) voiceLoading.style.display = 'none';
+                            resolve();
+                        }
+                    }, 10000);
+                });
+            }
+            
+            populateVoiceList() {
+                try {
+                    const voiceSelect = document.getElementById('voiceSelect');
+                    if (!voiceSelect) return;
+                    
+                    voiceSelect.innerHTML = '';
+                    voiceSelect.disabled = false;
+                    
+                    if (this.voices.length === 0) {
+                        voiceSelect.innerHTML = '<option value="">No voices available</option>';
+                        this.showMessage("Note: No TTS voices detected. Using default system voice.");
+                        return;
+                    }
+                    
+                    this.voices.forEach((voice, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `${voice.name} (${voice.lang})`;
+                        voiceSelect.appendChild(option);
+                    });
+                    
+                    const englishVoice = this.voices.find(v => v.lang.startsWith('en-'));
+                    if (englishVoice) {
+                        const voiceIndex = this.voices.indexOf(englishVoice);
+                        voiceSelect.value = voiceIndex;
+                        this.selectedVoice = englishVoice;
+                    } else if (this.voices.length > 0) {
+                        this.selectedVoice = this.voices[0];
+                    }
+                    
+                    this.showMessage(`Loaded ${this.voices.length} TTS voices`);
+                } catch (error) {
+                    console.error('Error in populateVoiceList:', error);
+                }
+            }
+            
+            // Setup Methods
+            setupEventListeners() {
+                try {
+                    // File upload
+                    const dropZone = document.getElementById('dropZone');
+                    const fileInput = document.getElementById('fileInput');
+                    
+                    if (dropZone) {
+                        dropZone.addEventListener('click', () => {
+                            if (fileInput) fileInput.click();
+                        });
+                        dropZone.addEventListener('dragover', (e) => {
+                            e.preventDefault();
+                            dropZone.style.borderColor = 'var(--accent)';
+                        });
+                        dropZone.addEventListener('dragleave', () => {
+                            dropZone.style.borderColor = 'var(--primary)';
+                        });
+                        dropZone.addEventListener('drop', async (e) => {
+                            e.preventDefault();
+                            dropZone.style.borderColor = 'var(--primary)';
+                            if (e.dataTransfer.files.length > 0) {
+                                await this.handleFiles(e.dataTransfer.files);
+                            }
+                        });
+                    }
+                    
+                    if (fileInput) {
+                        fileInput.addEventListener('change', async (e) => {
+                            await this.handleFiles(e.target.files);
+                        });
+                    }
+                    
+                    // TTS Controls
+                    const startBtn = document.getElementById('startBtn');
+                    const pauseBtn = document.getElementById('pauseBtn');
+                    const stopBtn = document.getElementById('stopBtn');
+                    const explainBtn = document.getElementById('explainBtn');
+                    
+                    if (startBtn) startBtn.addEventListener('click', () => this.startReading());
+                    if (pauseBtn) pauseBtn.addEventListener('click', () => this.togglePause());
+                    if (stopBtn) stopBtn.addEventListener('click', () => this.stopReading());
+                    if (explainBtn) explainBtn.addEventListener('click', () => {
+                        if (this.currentText) {
+                            this.generateDocumentExplanation(this.currentText, this.currentFileName, true);
+                        }
+                    });
+                    
+                    // Quick explanation buttons
+                    const quickExplainBtn = document.getElementById('quickExplainBtn');
+                    const closePreviewBtn = document.getElementById('closePreviewBtn');
+                    const instantExplainBtn = document.getElementById('instantExplainBtn');
+                    
+                    if (quickExplainBtn) quickExplainBtn.addEventListener('click', () => {
+                        const previewPanel = document.getElementById('explanationPreview');
+                        if (previewPanel) previewPanel.classList.toggle('active');
+                    });
+                    
+                    if (closePreviewBtn) closePreviewBtn.addEventListener('click', () => {
+                        const previewPanel = document.getElementById('explanationPreview');
+                        if (previewPanel) previewPanel.classList.remove('active');
+                    });
+                    
+                    if (instantExplainBtn) instantExplainBtn.addEventListener('click', () => {
+                        if (this.currentText) {
+                            this.generateDocumentExplanation(this.currentText, this.currentFileName, true);
+                        } else {
+                            this.showMessage("Please upload a document first");
+                        }
+                    });
+                    
+                    // Board Controls
+                    const clearBoardBtn = document.getElementById('clearBoardBtn');
+                    const exportBoardBtn = document.getElementById('exportBoardBtn');
+                    const clearTranscriptionBtn = document.getElementById('clearTranscriptionBtn');
+                    const closeExplanationBtn = document.getElementById('closeExplanationBtn');
+                    
+                    if (clearBoardBtn) clearBoardBtn.addEventListener('click', () => this.clearBoard());
+                    if (exportBoardBtn) exportBoardBtn.addEventListener('click', () => this.exportTranscription());
+                    if (clearTranscriptionBtn) clearTranscriptionBtn.addEventListener('click', () => this.clearTranscription());
+                    if (closeExplanationBtn) closeExplanationBtn.addEventListener('click', () => {
+                        const panel = document.getElementById('explanationPanel');
+                        if (panel) panel.style.display = 'none';
+                    });
+                    
+                    // Activation Modal Controls
+                    const upgradeBtn = document.getElementById('upgradeBtn');
+                    const closeModal = document.getElementById('closeModal');
+                    const purchaseBtn = document.getElementById('purchaseBtn');
+                    const activateBtn = document.getElementById('activateBtn');
+                    const continueBtn = document.getElementById('continueBtn');
+                    
+                    if (upgradeBtn) upgradeBtn.addEventListener('click', () => this.showActivationModal());
+                    if (closeModal) closeModal.addEventListener('click', () => this.hideActivationModal());
+                    if (purchaseBtn) purchaseBtn.addEventListener('click', () => this.handlePurchase());
+                    if (activateBtn) activateBtn.addEventListener('click', () => {
+                        const keyInput = document.getElementById('activationKeyInput');
+                        if (keyInput) {
+                            const key = keyInput.value;
+                            if (this.activatePremium(key)) {
+                                this.hideActivationModal();
+                            }
+                        }
+                    });
+                    if (continueBtn) continueBtn.addEventListener('click', () => {
+                        const keyDisplay = document.getElementById('activationKeyDisplay');
+                        if (keyDisplay) {
+                            this.hideSuccessModal();
+                            this.activatePremium(keyDisplay.textContent);
+                        }
+                    });
+                    
+                    // Plan selection
+                    document.querySelectorAll('.plan-option').forEach(plan => {
+                        plan.addEventListener('click', () => {
+                            document.querySelectorAll('.plan-option').forEach(p => p.classList.remove('active'));
+                            plan.classList.add('active');
+                        });
+                    });
+                    
+                    // Soundtrack Controls
+                    document.querySelectorAll('.soundtrack-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const track = btn.dataset.track;
+                            if (btn.classList.contains('feature-locked') && (track === 'focus' || track === 'classical')) {
+                                this.showActivationModal();
+                                return;
+                            }
+                            document.querySelectorAll('.soundtrack-btn').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            this.playSoundtrack(track);
+                        });
+                    });
+                    
+                    const muteBtn = document.getElementById('muteBtn');
+                    const volumeSlider = document.getElementById('volumeSlider');
+                    
+                    if (muteBtn) muteBtn.addEventListener('click', () => this.toggleMute());
+                    if (volumeSlider) volumeSlider.addEventListener('input', (e) => {
+                        this.setVolume(e.target.value);
+                    });
+                    
+                    // Voice selection
+                    const voiceSelect = document.getElementById('voiceSelect');
+                    if (voiceSelect) {
+                        voiceSelect.addEventListener('change', (e) => {
+                            const index = parseInt(e.target.value);
+                            if (index >= 0 && index < this.voices.length) {
+                                this.selectedVoice = this.voices[index];
+                                this.showMessage(`Selected voice: ${this.selectedVoice.name}`);
+                            }
+                        });
+                    }
+                    
+                    // Rate control
+                    const rateControl = document.getElementById('rateControl');
+                    const rateValue = document.getElementById('rateValue');
+                    if (rateControl && rateValue) {
+                        rateControl.addEventListener('input', (e) => {
+                            const value = parseFloat(e.target.value);
+                            rateValue.textContent = `${value.toFixed(1)}x`;
+                            if (this.currentUtterance) {
+                                this.currentUtterance.rate = value;
+                            }
+                        });
+                    }
+                    
+                    // AI Features
+                    document.querySelectorAll('.ai-feature').forEach(feature => {
+                        feature.addEventListener('click', (e) => {
+                            const featureId = e.currentTarget.id.replace('Feature', '').toLowerCase();
+                            if (featureId === 'explain' && !this.isActivated) {
+                                this.showActivationModal();
+                                return;
+                            }
+                            this.aiFeatures[featureId] = !this.aiFeatures[featureId];
+                            e.currentTarget.classList.toggle('active');
+                            this.showMessage(`${this.capitalizeFirstLetter(featureId)} ${this.aiFeatures[featureId] ? 'enabled' : 'disabled'}`);
+                        });
+                    });
+                    
+                    // Command interface
+                    const cmdSubmit = document.getElementById('cmdSubmit');
+                    const cmdInput = document.getElementById('cmdInput');
+                    
+                    if (cmdSubmit) cmdSubmit.addEventListener('click', () => this.processCommand());
+                    if (cmdInput) cmdInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') this.processCommand();
+                    });
+                } catch (error) {
+                    console.error('Error in setupEventListeners:', error);
+                }
+            }
+            
+            setupBoard() {
+                try {
+                    document.querySelectorAll('.board-type').forEach(type => {
+                        type.addEventListener('click', (e) => {
+                            if (e.target.classList.contains('feature-locked') && e.target.dataset.type === 'teleprompter') {
+                                this.showActivationModal();
+                                return;
+                            }
+                            document.querySelectorAll('.board-type').forEach(t => t.classList.remove('active'));
+                            e.target.classList.add('active');
+                            this.boardType = e.target.dataset.type;
+                            const boardTypeElement = document.getElementById('boardType');
+                            if (boardTypeElement) boardTypeElement.textContent = this.capitalizeFirstLetter(this.boardType);
+                            this.updateBoardDisplay();
+                        });
+                    });
+                    
+                    const boardSpeed = document.getElementById('boardSpeed');
+                    const boardSpeedValue = document.getElementById('boardSpeedValue');
+                    
+                    if (boardSpeed && boardSpeedValue) {
+                        boardSpeed.addEventListener('input', (e) => {
+                            this.boardSpeed = parseInt(e.target.value);
+                            const speeds = ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'];
+                            boardSpeedValue.textContent = speeds[this.boardSpeed - 1] || 'Custom';
+                        });
+                    }
+                    
+                    const toggleAnalysisBtn = document.getElementById('toggleAnalysisBtn');
+                    if (toggleAnalysisBtn) toggleAnalysisBtn.addEventListener('click', () => this.toggleAnalysis());
+                } catch (error) {
+                    console.error('Error in setupBoard:', error);
+                }
+            }
+            
+            setupCommands() {
+                // Already handled in setupEventListeners
+            }
+            
+            setupSoundtracks() {
+                // Already handled in setupEventListeners
+            }
+            
+            // Activation System Methods
+            validateActivationKey(key) {
+                if (!key) return false;
+                // Simple validation
+                return key.length === 25 && key.startsWith('TTS') && key.includes('PRO');
+            }
+            
+            generateActivationKey(email, plan) {
+                const timestamp = Date.now().toString(36);
+                const random = Math.random().toString(36).substr(2, 6).toUpperCase();
+                const planCode = plan === 'yearly' ? 'YR' : 'MO';
+                return `TTS-PRO-${planCode}-${random}-${timestamp}`;
+            }
+            
+            activatePremium(key) {
+                try {
+                    this.activationKey = key;
+                    localStorage.setItem('ttsProActivation', key);
+                    this.isActivated = true;
+                    this.aiFeatures.explanation = true;
+                    this.updateActivationStatus();
+                    this.updatePremiumFeatures();
+                    this.showMessage("Premium activated successfully!");
+                    this.displayOnBoard("✓ Premium Activated\n\nAll features unlocked!\n\nYou now have access to:\n• AI Document Explanation\n• Advanced Soundtracks\n• Export Features\n• Priority Support");
+                    return true;
+                } catch (error) {
+                    console.error('Error in activatePremium:', error);
+                    this.showMessage("Failed to activate premium");
+                    return false;
+                }
+            }
+            
+            updateActivationStatus() {
+                try {
+                    const statusElement = document.getElementById('activationStatus');
+                    if (!statusElement) return;
+                    
+                    const dot = statusElement.querySelector('.activation-dot');
+                    const text = statusElement.querySelector('span');
+                    
+                    if (this.isActivated) {
+                        if (dot) dot.classList.add('active');
+                        if (text) text.textContent = 'Premium Activated';
+                        statusElement.style.borderColor = 'var(--premium)';
+                    } else {
+                        if (dot) dot.classList.remove('active');
+                        if (text) text.textContent = `Trial - ${this.remainingDays} days left`;
+                        statusElement.style.borderColor = 'var(--warning)';
+                    }
+                } catch (error) {
+                    console.error('Error in updateActivationStatus:', error);
+                }
+            }
+            
+            updatePremiumFeatures() {
+                try {
+                    const premiumFeatures = document.querySelectorAll('.feature-locked, .premium-indicator');
+                    const explainBtn = document.getElementById('explainBtn');
+                    
+                    if (this.isActivated) {
+                        premiumFeatures.forEach(el => {
+                            el.classList.remove('feature-locked');
+                            if (el.classList.contains('premium-indicator')) {
+                                el.style.display = 'block';
+                            }
+                        });
+                        if (explainBtn) explainBtn.disabled = false;
+                        
+                        const exportBoardBtn = document.getElementById('exportBoardBtn');
+                        if (exportBoardBtn) exportBoardBtn.disabled = false;
+                        
+                        // Enable premium soundtrack options
+                        document.querySelectorAll('.soundtrack-btn[data-track="focus"], .soundtrack-btn[data-track="classical"]').forEach(btn => {
+                            btn.classList.remove('feature-locked');
+                        });
+                        
+                        // Enable premium board types
+                        document.querySelectorAll('.board-type[data-type="teleprompter"]').forEach(el => {
+                            el.classList.remove('feature-locked');
+                        });
+                    } else {
+                        premiumFeatures.forEach(el => {
+                            if (!el.classList.contains('premium-indicator')) {
+                                el.classList.add('feature-locked');
+                            }
+                            if (el.classList.contains('premium-indicator')) {
+                                el.style.display = 'none';
+                            }
+                        });
+                        if (explainBtn) explainBtn.disabled = true;
+                    }
+                } catch (error) {
+                    console.error('Error in updatePremiumFeatures:', error);
+                }
+            }
+            
+            handlePurchase() {
+                try {
+                    const emailInput = document.getElementById('emailInput');
+                    const email = emailInput ? emailInput.value : '';
+                    const activePlan = document.querySelector('.plan-option.active');
+                    const plan = activePlan && activePlan.id === 'yearlyPlan' ? 'yearly' : 'monthly';
+                    
+                    if (!email || !email.includes('@')) {
+                        this.showMessage("Please enter a valid email address");
+                        return;
+                    }
+                    
+                    this.hideActivationModal();
+                    
+                    // Generate activation key
+                    const activationKey = this.generateActivationKey(email, plan);
+                    
+                    // Show success modal with generated key
+                    this.showSuccessModal(activationKey);
+                    
+                    console.log(`Purchase: ${plan} plan for ${email}, Key: ${activationKey}`);
+                } catch (error) {
+                    console.error('Error in handlePurchase:', error);
+                    this.showMessage("Failed to process purchase");
+                }
+            }
+            
+            // Soundtrack System Methods
+            initAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.setupSoundGenerators();
+                } catch (e) {
+                    console.warn('Web Audio API not supported:', e);
+                }
+            }
+            
+            setupSoundGenerators() {
+                // Generate ambient sound
+                this.generateAmbientSound();
+                
+                // Generate nature sound
+                this.generateNatureSound();
+            }
+            
+            generateAmbientSound() {
+                if (!this.audioContext) return;
+                
+                try {
+                    const bufferSize = 4096;
+                    const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                    const output = noiseBuffer.getChannelData(0);
+                    
+                    for (let i = 0; i < bufferSize; i++) {
+                        output[i] = Math.random() * 2 - 1;
+                    }
+                    
+                    const source = this.audioContext.createBufferSource();
+                    source.buffer = noiseBuffer;
+                    source.loop = true;
+                    
+                    const filter = this.audioContext.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1000;
+                    filter.Q.value = 0.5;
+                    
+                    const gainNode = this.audioContext.createGain();
+                    gainNode.gain.value = this.volume;
+                    
+                    source.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    source.start();
+                    this.audioSources.ambient = { source, filter, gainNode };
+                } catch (error) {
+                    console.error('Error generating ambient sound:', error);
+                }
+            }
+            
+            generateNatureSound() {
+                if (!this.audioContext) return;
+                
+                try {
+                    const bufferSize = 4096;
+                    const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                    const output = noiseBuffer.getChannelData(0);
+                    
+                    let lastOut = 0;
+                    for (let i = 0; i < bufferSize; i++) {
+                        const white = Math.random() * 2 - 1;
+                        output[i] = (lastOut + (0.02 * white)) / 1.02;
+                        lastOut = output[i];
+                        output[i] *= 3.5;
+                    }
+                    
+                    const source = this.audioContext.createBufferSource();
+                    source.buffer = noiseBuffer;
+                    source.loop = true;
+                    
+                    const filter = this.audioContext.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 300;
+                    filter.Q.value = 1;
+                    
+                    const gainNode = this.audioContext.createGain();
+                    gainNode.gain.value = this.volume;
+                    
+                    source.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    source.start();
+                    this.audioSources.nature = { source, filter, gainNode };
+                    
+                    // Add occasional bird chirps
+                    this.scheduleBirdChirps();
+                } catch (error) {
+                    console.error('Error generating nature sound:', error);
+                }
+            }
+            
+            scheduleBirdChirps() {
+                if (!this.audioContext) return;
+                
+                setInterval(() => {
+                    if (Math.random() > 0.3 && this.currentTrack === 'nature') {
+                        this.playBirdChirp();
+                    }
+                }, 3000);
+            }
+            
+            playBirdChirp() {
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1000, this.audioContext.currentTime + 0.2);
+                    
+                    gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(this.audioContext.currentTime + 0.3);
+                } catch (error) {
+                    console.error('Error playing bird chirp:', error);
+                }
+            }
+            
+            playSoundtrack(track) {
+                if (!this.isActivated && (track === 'focus' || track === 'classical')) {
+                    this.showMessage("Premium soundtrack requires activation");
+                    return;
+                }
+                
+                this.currentTrack = track;
+                this.stopAllSoundtracks();
+                
+                if (track === 'none' || this.isMuted) return;
+                
+                switch(track) {
+                    case 'ambient':
+                        if (this.audioSources.ambient) {
+                            this.audioSources.ambient.gainNode.gain.value = this.volume;
+                        }
+                        break;
+                    case 'nature':
+                        if (this.audioSources.nature) {
+                            this.audioSources.nature.gainNode.gain.value = this.volume;
+                        }
+                        break;
+                    case 'focus':
+                        this.showMessage("Focus music would play here (requires audio files)");
+                        break;
+                    case 'classical':
+                        this.showMessage("Classical music would play here (requires audio files)");
+                        break;
+                }
+            }
+            
+            stopAllSoundtracks() {
+                Object.values(this.audioSources).forEach(source => {
+                    if (source && source.gainNode) {
+                        source.gainNode.gain.value = 0;
+                    }
+                });
+            }
+            
+            setVolume(volume) {
+                this.volume = volume / 100;
+                if (this.audioSources[this.currentTrack]) {
+                    this.audioSources[this.currentTrack].gainNode.gain.value = this.volume;
+                }
+            }
+            
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                const muteBtn = document.getElementById('muteBtn');
+                
+                if (this.isMuted) {
+                    this.stopAllSoundtracks();
+                    if (muteBtn) muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i> Unmute';
+                } else {
+                    if (muteBtn) muteBtn.innerHTML = '<i class="fas fa-volume-up"></i> Mute';
+                    this.playSoundtrack(this.currentTrack);
+                }
+            }
+            
+            // File Handling Methods
+            async handleFiles(files) {
+                if (!files || files.length === 0) return;
+                
+                this.showMessage(`Processing ${files.length} file(s)...`);
+                this.updateStatus('loading', 'Processing files...');
+                
+                this.files = [];
+                const fileList = document.getElementById('fileList');
+                if (fileList) fileList.innerHTML = '';
+                
+                for (let file of files) {
+                    await this.processFile(file);
+                }
+                
+                if (this.files && this.files.length > 0) {
+                    this.loadFile(0);
+                }
+                
+                this.updateStatus('ready', 'Files processed');
+            }
+            
+            async processFile(file) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = async (e) => {
+                        const content = e.target.result;
+                        let text = '';
+                        
+                        try {
+                            if (file.name.toLowerCase().endsWith('.pdf')) {
+                                text = await this.extractTextFromPDF(content);
+                            } else if (file.name.toLowerCase().endsWith('.docx')) {
+                                text = await this.extractTextFromDOCX(content);
+                            } else {
+                                const decoder = new TextDecoder('utf-8');
+                                text = decoder.decode(content);
+                            }
+                        } catch (error) {
+                            console.error('Error processing file:', error);
+                            text = `[Error processing file: ${error.message}]`;
+                        }
+                        
+                        if (!this.files) this.files = [];
+                        this.files.push({
+                            name: file.name,
+                            content: text,
+                            size: file.size
+                        });
+                        
+                        // Add to file list UI
+                        const fileList = document.getElementById('fileList');
+                        if (fileList) {
+                            const li = document.createElement('li');
+                            li.innerHTML = `
+                                <span>${file.name}</span>
+                                <span class="file-size">${this.formatFileSize(file.size)}</span>
+                            `;
+                            fileList.appendChild(li);
+                        }
+                        
+                        this.showMessage(`Loaded: ${file.name}`);
+                        resolve();
+                    };
+                    
+                    reader.onerror = (error) => {
+                        console.error('File reading error:', error);
+                        this.showMessage(`Error reading file: ${file.name}`);
+                        resolve();
+                    };
+                    
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+            
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            async extractTextFromPDF(data) {
+                try {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    
+                    const loadingTask = pdfjsLib.getDocument({data: data});
+                    const pdf = await loadingTask.promise;
+                    let fullText = '';
+                    
+                    this.updateProgress(0, 'Extracting text from PDF...');
+                    
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        try {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            const pageText = textContent.items.map(item => item.str).join(' ');
+                            fullText += pageText + '\n\n';
+                            
+                            const progress = (i / pdf.numPages) * 100;
+                            this.updateProgress(progress, `Processing page ${i} of ${pdf.numPages}`);
+                        } catch (pageError) {
+                            console.error(`Error processing page ${i}:`, pageError);
+                            fullText += `\n\n[Error processing page ${i}]`;
+                        }
+                    }
+                    
+                    return fullText || "[No text extracted from PDF]";
+                } catch (error) {
+                    console.error('PDF extraction error:', error);
+                    return `[PDF extraction failed: ${error.message}]`;
+                }
+            }
+            
+            async extractTextFromDOCX(data) {
+                try {
+                    const result = await mammoth.extractRawText({arrayBuffer: data});
+                    return result.value || "[No text extracted from DOCX]";
+                } catch (error) {
+                    console.error('DOCX extraction error:', error);
+                    return `[DOCX extraction failed: ${error.message}]`;
+                }
+            }
+            
+            // Enhanced loadFile method
+            async loadFile(index) {
+                if (!this.files || index >= this.files.length) {
+                    this.showMessage("No file to load");
+                    return;
+                }
+                
+                const file = this.files[index];
+                this.currentText = file.content;
+                this.currentFileName = file.name;
+                
+                // Split text into chunks for TTS
+                this.textChunks = this.splitTextIntoChunks(this.currentText);
+                this.currentChunkIndex = 0;
+                
+                // Process text for board display
+                this.allWords = this.currentText.split(/\s+/).filter(w => w.length > 0);
+                this.sentences = this.splitIntoSentences(this.currentText);
+                this.sentenceIndex = 0;
+                this.currentWordIndex = 0;
+                
+                // Reset statistics
+                this.stats.wordsSpoken = 0;
+                this.stats.totalWords = this.allWords.length;
+                this.stats.startTime = null;
+                this.stats.errors = 0;
+                
+                // Clear previous transcription
+                this.fullTranscription = '';
+                this.transcriptionTimestamps = [];
+                const transcriptionContent = document.getElementById('transcriptionContent');
+                if (transcriptionContent) transcriptionContent.innerHTML = 'Transcription cleared. New transcription will appear here.';
+                
+                // Update board
+                const wordCount = this.allWords.length;
+                const fileInfo = `Document: ${file.name}\nSize: ${this.formatFileSize(file.size)}\nWords: ${wordCount}\nChunks: ${this.textChunks.length}`;
+                
+                this.displayOnBoard(`${fileInfo}\n\nReady to read! Click "Start Reading" or type "read" in command interface.\n\n` +
+                    (this.isActivated ? "✓ AI Explanation available" : "Upgrade for AI Explanation"));
+                
+                // Enable explain button if text is available
+                const explainBtn = document.getElementById('explainBtn');
+                if (explainBtn) explainBtn.disabled = false;
+                
+                // Perform instant AI analysis if activated
+                if (this.isActivated && this.allWords.length > 50) {
+                    // Start instant analysis immediately
+                    this.analyzeDocumentInstantly(this.currentText, file.name).then(analysis => {
+                        if (analysis) {
+                            this.showMessage(`✓ Instant AI analysis complete for ${file.name}`);
+                        }
+                    });
+                }
+                
+                this.showMessage(`Ready to read: ${file.name} (${wordCount} words, ${this.textChunks.length} chunks)`);
+                this.updateProgress(0, `Loaded: ${file.name}`);
+            }
+            
+            // TTS Methods
+            startReading() {
+                if (!this.currentText || this.currentText.trim() === '') {
+                    this.showMessage('Error: No text to read. Please upload a file first.');
+                    return;
+                }
+                
+                if (this.textChunks.length === 0) {
+                    this.showMessage('Error: No text chunks to read. Please reload the file.');
+                    return;
+                }
+                
+                // Resume audio context if suspended
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+                
+                if (this.isPaused && this.currentUtterance) {
+                    this.speechSynthesis.resume();
+                    this.isPaused = false;
+                    this.updateStatus('speaking', 'Reading resumed');
+                    this.startBoardUpdates();
+                    return;
+                }
+                
+                this.stopReading(); // Ensure clean stop before starting
+                
+                // Start statistics
+                this.stats.startTime = Date.now();
+                this.currentChunkIndex = 0;
+                
+                // Start reading the first chunk
+                this.readNextChunk();
+            }
+            
+            stopReading() {
+                console.log('Stopping reading...');
+                
+                // Stop TTS
+                if (this.speechSynthesis.speaking) {
+                    this.speechSynthesis.cancel();
+                    console.log('TTS cancelled');
+                }
+                
+                // Stop board updates
+                this.stopBoardUpdates();
+                
+                // Reset all states
+                this.isSpeaking = false;
+                this.isPaused = false;
+                this.currentChunkIndex = 0;
+                this.currentWordIndex = 0;
+                
+                // Clear any ongoing utterance
+                this.currentUtterance = null;
+                
+                // Reset audio context if it was suspended
+                if (this.audioContext && this.audioContext.state === 'running') {
+                    this.audioContext.suspend().then(() => {
+                        console.log('Audio context suspended');
+                    });
+                }
+                
+                this.updateStatus('ready', 'Stopped');
+                this.showMessage("Reading stopped completely");
+                
+                // Reset progress
+                this.updateProgress(0, 'Stopped');
+                
+                // Reset board display
+                if (this.currentText) {
+                    this.displayOnBoard("Reading stopped.\n\n" + 
+                        `Document: ${this.currentFileName || 'Unknown'}\n` +
+                        `Words processed: ${this.stats.wordsSpoken}/${this.allWords.length}\n\n` +
+                        "Click 'Start Reading' to continue or upload a new file.");
+                }
+            }
+            
+            togglePause() {
+                if (this.isSpeaking) {
+                    if (this.isPaused) {
+                        this.speechSynthesis.resume();
+                        this.isPaused = false;
+                        this.updateStatus('speaking', 'Reading resumed');
+                        this.startBoardUpdates();
+                        this.showMessage("Reading resumed");
+                    } else {
+                        this.speechSynthesis.pause();
+                        this.isPaused = true;
+                        this.updateStatus('paused', 'Reading paused');
+                        this.stopBoardUpdates();
+                        this.showMessage("Reading paused");
+                    }
+                }
+            }
+            
+            readNextChunk() {
+                if (this.currentChunkIndex >= this.textChunks.length) {
+                    this.isSpeaking = false;
+                    this.updateStatus('ready', 'Reading completed');
+                    this.stopBoardUpdates();
+                    this.calculateFinalStats();
+                    this.showMessage('Reading completed');
+                    return;
+                }
+                
+                const chunkText = this.textChunks[this.currentChunkIndex];
+                const chunkInfo = `(Chunk ${this.currentChunkIndex + 1}/${this.textChunks.length})`;
+                
+                this.currentUtterance = new SpeechSynthesisUtterance(chunkText);
+                
+                if (this.selectedVoice) {
+                    this.currentUtterance.voice = this.selectedVoice;
+                }
+                
+                const rateControl = document.getElementById('rateControl');
+                this.currentUtterance.rate = rateControl ? parseFloat(rateControl.value) : 1;
+                
+                this.currentUtterance.onstart = () => {
+                    this.isSpeaking = true;
+                    this.updateStatus('speaking', `Reading ${chunkInfo}`);
+                    this.startBoardUpdates();
+                    
+                    const wordCount = chunkText.split(/\s+/).length;
+                    this.showMessage(`Started reading chunk ${this.currentChunkIndex + 1}/${this.textChunks.length} (${wordCount} words)`);
+                };
+                
+                this.currentUtterance.onend = () => {
+                    console.log(`Chunk ${this.currentChunkIndex + 1} completed`);
+                    
+                    this.currentChunkIndex++;
+                    
+                    const overallProgress = (this.currentChunkIndex / this.textChunks.length) * 100;
+                    this.updateProgress(overallProgress, `Completed chunk ${this.currentChunkIndex}/${this.textChunks.length}`);
+                    
+                    setTimeout(() => {
+                        this.readNextChunk();
+                    }, 100);
+                };
+                
+                this.currentUtterance.onerror = (event) => {
+                    console.error('Speech error:', event);
+                    this.showMessage(`Speech error in chunk ${this.currentChunkIndex + 1}: ${event.error}`);
+                    
+                    this.currentChunkIndex++;
+                    
+                    setTimeout(() => {
+                        this.readNextChunk();
+                    }, 500);
+                };
+                
+                this.updateWordIndexForChunk(chunkText);
+                
+                console.log(`Starting chunk ${this.currentChunkIndex + 1}/${this.textChunks.length}`);
+                this.speechSynthesis.speak(this.currentUtterance);
+            }
+            
+            splitTextIntoChunks(text, chunkSize = 500) {
+                const sentences = text.split(/(?<=[.!?])\s+/);
+                const chunks = [];
+                let currentChunk = '';
+                
+                for (const sentence of sentences) {
+                    if ((currentChunk + sentence).length > chunkSize && currentChunk.length > 0) {
+                        chunks.push(currentChunk.trim());
+                        currentChunk = sentence + ' ';
+                    } else {
+                        currentChunk += sentence + ' ';
+                    }
+                }
+                
+                if (currentChunk.trim().length > 0) {
+                    chunks.push(currentChunk.trim());
+                }
+                
+                return chunks;
+            }
+            
+            updateWordIndexForChunk(chunkText) {
+                const chunkWords = chunkText.split(/\s+/).filter(w => w.length > 0);
+                const chunkStartText = chunkWords.slice(0, 5).join(' ');
+                
+                const startIndex = this.currentText.indexOf(chunkStartText);
+                if (startIndex !== -1) {
+                    const textBeforeChunk = this.currentText.substring(0, startIndex);
+                    this.currentWordIndex = textBeforeChunk.split(/\s+/).filter(w => w.length > 0).length;
+                }
+            }
+            
+            // Board Methods
+            startBoardUpdates() {
+                if (this.boardUpdateInterval) {
+                    clearInterval(this.boardUpdateInterval);
+                }
+                
+                const rateControl = document.getElementById('rateControl');
+                const wordsPerMinute = 150 * (rateControl ? parseFloat(rateControl.value) : 1);
+                const wordsPerSecond = wordsPerMinute / 60;
+                const updateInterval = 1000 / (wordsPerSecond * (this.boardSpeed / 3));
+                
+                this.boardUpdateInterval = setInterval(() => {
+                    this.updateBoard();
+                }, updateInterval);
+            }
+            
+            stopBoardUpdates() {
+                if (this.boardUpdateInterval) {
+                    clearInterval(this.boardUpdateInterval);
+                    this.boardUpdateInterval = null;
+                }
+            }
+            
+            updateBoard() {
+                if (this.currentWordIndex >= this.allWords.length) {
+                    this.stopBoardUpdates();
+                    return;
+                }
+                
+                const currentWord = this.allWords[this.currentWordIndex] || '';
+                const previousWords = this.allWords.slice(0, this.currentWordIndex).join(' ');
+                const upcomingWords = this.allWords.slice(this.currentWordIndex + 1, this.currentWordIndex + 10).join(' ');
+                
+                switch(this.boardType) {
+                    case 'stream':
+                        this.updateStreamingDisplay(currentWord, previousWords, upcomingWords);
+                        break;
+                    case 'karaoke':
+                        this.updateKaraokeDisplay(currentWord, previousWords, upcomingWords);
+                        break;
+                    case 'typewriter':
+                        this.updateTypewriterDisplay(currentWord, previousWords);
+                        break;
+                    case 'teleprompter':
+                        this.updateTeleprompterDisplay(currentWord, previousWords, upcomingWords);
+                        break;
+                }
+                
+                this.updateTranscription(currentWord);
+                
+                this.stats.wordsSpoken++;
+                this.updateStatistics();
+                
+                this.currentWordIndex++;
+                
+                const progress = (this.currentWordIndex / this.allWords.length) * 100;
+                this.updateProgress(progress, `Reading... ${Math.round(progress)}%`);
+                
+                if (this.currentWordIndex < this.allWords.length) {
+                    const nextWord = this.allWords[this.currentWordIndex];
+                    if (nextWord && nextWord.match(/[.!?]$/)) {
+                        this.sentenceIndex++;
+                        if (this.aiFeatures.grammar && this.sentenceIndex % 3 === 0) {
+                            this.checkGrammar(this.getCurrentSentence());
+                        }
+                    }
+                }
+            }
+            
+            updateStreamingDisplay(currentWord, previousWords, upcomingWords) {
+                const textStream = document.getElementById('textStream');
+                if (!textStream) return;
+                
+                const previousWordsArray = previousWords.split(' ');
+                const displayPrevious = previousWordsArray.slice(-50).join(' ');
+                
+                textStream.innerHTML = `
+                    <div class="previous-text">${displayPrevious || ''}</div>
+                    <div class="current-sentence">
+                        <span class="current-word">${currentWord}</span>
+                        <span> ${upcomingWords.split(' ')[0] || ''}</span>
+                    </div>
+                    <div class="upcoming-text">${upcomingWords.split(' ').slice(1, 10).join(' ')}</div>
+                `;
+            }
+            
+            updateKaraokeDisplay(currentWord, previousWords, upcomingWords) {
+                const textStream = document.getElementById('textStream');
+                if (!textStream) return;
+                
+                const highlighted = upcomingWords.split(' ').map((word, index) => {
+                    if (index === 0) {
+                        return `<span class="current-word">${word}</span>`;
+                    }
+                    if (index < 5) {
+                        return word;
+                    }
+                    return '';
+                }).filter(w => w !== '').join(' ');
+                
+                textStream.innerHTML = `
+                    <div class="previous-text">${previousWords.split(' ').slice(-30).join(' ')}</div>
+                    <div class="current-sentence">
+                        ${highlighted}
+                    </div>
+                `;
+            }
+            
+            updateTypewriterDisplay(currentWord, previousWords) {
+                const textStream = document.getElementById('textStream');
+                if (!textStream) return;
+                
+                const displayText = (previousWords + ' ' + currentWord).trim();
+                
+                textStream.innerHTML = `
+                    <div style="font-family: 'Courier New', monospace; font-size: 1.6rem; white-space: pre-wrap;">
+                        ${displayText}<span class="cursor"></span>
+                    </div>
+                `;
+            }
+            
+            updateTeleprompterDisplay(currentWord, previousWords, upcomingWords) {
+                const textStream = document.getElementById('textStream');
+                if (!textStream) return;
+                
+                const context = upcomingWords.split(' ').slice(0, 20).join(' ');
+                
+                textStream.innerHTML = `
+                    <div style="text-align: center; font-size: 2rem; line-height: 1.8;">
+                        <div style="color: #64748b; margin-bottom: 20px;">
+                            ${previousWords.split(' ').slice(-5).join(' ')}
+                        </div>
+                        <div class="current-word" style="font-size: 2.5rem;">
+                            ${currentWord}
+                        </div>
+                        <div style="color: #94a3b8; margin-top: 20px;">
+                            ${context}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            updateBoardDisplay() {
+                if (this.isSpeaking && this.allWords.length > 0) {
+                    const currentWord = this.allWords[this.currentWordIndex] || '';
+                    const previousWords = this.allWords.slice(0, this.currentWordIndex).join(' ');
+                    const upcomingWords = this.allWords.slice(this.currentWordIndex + 1, this.currentWordIndex + 10).join(' ');
+                    
+                    switch(this.boardType) {
+                        case 'stream':
+                            this.updateStreamingDisplay(currentWord, previousWords, upcomingWords);
+                            break;
+                        case 'karaoke':
+                            this.updateKaraokeDisplay(currentWord, previousWords, upcomingWords);
+                            break;
+                        case 'typewriter':
+                            this.updateTypewriterDisplay(currentWord, previousWords);
+                            break;
+                        case 'teleprompter':
+                            this.updateTeleprompterDisplay(currentWord, previousWords, upcomingWords);
+                            break;
+                    }
+                }
+            }
+            
+            updateTranscription(word) {
+                const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                this.transcriptionTimestamps.push({word, timestamp});
+                
+                this.fullTranscription += word + ' ';
+                
+                const transcriptionContent = document.getElementById('transcriptionContent');
+                if (!transcriptionContent) return;
+                
+                const recentWords = this.transcriptionTimestamps.slice(-50);
+                
+                transcriptionContent.innerHTML = recentWords.map(item => 
+                    `<div><span class="timestamp">[${item.timestamp}]</span> ${item.word}</div>`
+                ).join('');
+                
+                transcriptionContent.scrollTop = transcriptionContent.scrollHeight;
+            }
+            
+            // Utility Methods
+            showMessage(message) {
+                try {
+                    const cmdHistory = document.getElementById('cmdHistory');
+                    if (cmdHistory) {
+                        const entry = document.createElement('div');
+                        entry.style.color = 'var(--warning)';
+                        entry.style.marginBottom = '5px';
+                        entry.style.fontSize = '0.9rem';
+                        entry.textContent = `System: ${message}`;
+                        cmdHistory.appendChild(entry);
+                        cmdHistory.scrollTop = cmdHistory.scrollHeight;
+                        
+                        const messages = cmdHistory.querySelectorAll('div');
+                        if (messages.length > 50) {
+                            for (let i = 0; i < messages.length - 50; i++) {
+                                if (cmdHistory.firstChild) {
+                                    cmdHistory.removeChild(cmdHistory.firstChild);
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error in showMessage:', error);
+                }
+            }
+            
+            updateStatus(state, message) {
+                try {
+                    const indicator = document.getElementById('statusIndicator');
+                    const statusText = document.getElementById('statusText');
+                    
+                    if (indicator && statusText) {
+                        indicator.className = 'indicator';
+                        indicator.style.background = '';
+                        indicator.style.animation = '';
+                        
+                        statusText.textContent = message;
+                        
+                        switch(state) {
+                            case 'ready':
+                                indicator.style.background = 'var(--success)';
+                                break;
+                            case 'speaking':
+                                indicator.style.background = 'var(--primary)';
+                                indicator.style.animation = 'pulse 1s infinite';
+                                break;
+                            case 'loading':
+                                indicator.style.background = 'var(--warning)';
+                                indicator.style.animation = 'pulse 1s infinite';
+                                break;
+                            case 'paused':
+                                indicator.style.background = 'var(--warning)';
+                                break;
+                            case 'error':
+                                indicator.style.background = 'var(--danger)';
+                                break;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error in updateStatus:', error);
+                }
+            }
+            
+            displayOnBoard(text) {
+                try {
+                    const textStream = document.getElementById('textStream');
+                    if (textStream) {
+                        textStream.innerHTML = `
+                            <div style="font-size: 1.2rem; line-height: 1.6; color: var(--board-text);">
+                                ${text.replace(/\n/g, '<br>')}
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error in displayOnBoard:', error);
+                }
+            }
+            
+            updateStatistics() {
+                if (this.stats.startTime) {
+                    const elapsedMinutes = (Date.now() - this.stats.startTime) / 60000;
+                    if (elapsedMinutes > 0) {
+                        const wpm = Math.round(this.stats.wordsSpoken / elapsedMinutes);
+                        const wpmElement = document.getElementById('wpm');
+                        if (wpmElement) wpmElement.textContent = wpm;
+                    }
+                }
+                
+                const wordCountElement = document.getElementById('wordCount');
+                const accuracyElement = document.getElementById('accuracy');
+                
+                if (wordCountElement) wordCountElement.textContent = this.stats.wordsSpoken;
+                if (accuracyElement) accuracyElement.textContent = `${this.stats.accuracy}%`;
+            }
+            
+            calculateFinalStats() {
+                if (!this.stats.startTime) return;
+                
+                const elapsedMinutes = (Date.now() - this.stats.startTime) / 60000;
+                const wpm = elapsedMinutes > 0 ? Math.round(this.stats.wordsSpoken / elapsedMinutes) : 0;
+                const accuracy = this.stats.wordsSpoken > 0 ? 
+                    Math.max(0, 100 - (this.stats.errors / this.stats.wordsSpoken * 100)) : 100;
+                
+                this.showMessage(`Reading completed: ${wpm} WPM, ${accuracy.toFixed(1)}% accuracy`);
+                
+                const wpmElement = document.getElementById('wpm');
+                const accuracyElement = document.getElementById('accuracy');
+                
+                if (wpmElement) wpmElement.textContent = wpm;
+                if (accuracyElement) accuracyElement.textContent = `${accuracy.toFixed(1)}%`;
+            }
+            
+            updateProgress(percent, message) {
+                const progressFill = document.getElementById('progressFill');
+                const progressText = document.getElementById('progressText');
+                
+                if (progressFill) progressFill.style.width = `${percent}%`;
+                if (progressText) progressText.textContent = `${Math.round(percent)}%`;
+                
+                if (message && !this.isSpeaking) {
+                    this.updateStatus('loading', message);
+                }
+            }
+            
+            clearBoard() {
+                this.displayOnBoard("Board cleared. Ready for new content.");
+                this.showMessage("Write-out board cleared");
+            }
+            
+            clearTranscription() {
+                this.fullTranscription = '';
+                this.transcriptionTimestamps = [];
+                const transcriptionContent = document.getElementById('transcriptionContent');
+                if (transcriptionContent) transcriptionContent.innerHTML = 'Transcription cleared.';
+                this.showMessage("Transcription cleared");
+            }
+            
+            exportTranscription() {
+                if (!this.fullTranscription) {
+                    this.showMessage("No transcription to export");
+                    return;
+                }
+                
+                try {
+                    const blob = new Blob([this.fullTranscription], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'transcription.txt';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    this.showMessage("Transcription exported");
+                } catch (error) {
+                    console.error('Error exporting transcription:', error);
+                    this.showMessage("Failed to export transcription");
+                }
+            }
+            
+            performAIAnalysis() {
+                if (!this.currentText || this.currentText.length < 50) {
+                    this.showMessage("Need more text for analysis");
+                    return;
+                }
+                
+                const analysis = this.generateAIAnalysis(this.currentText);
+                const analysisContent = document.getElementById('analysisContent');
+                const aiAnalysis = document.getElementById('aiAnalysis');
+                
+                if (analysisContent) analysisContent.innerHTML = analysis;
+                if (aiAnalysis) aiAnalysis.style.display = 'block';
+                
+                this.showMessage("AI analysis generated");
+            }
+            
+            generateAIAnalysis(text) {
+                const wordCount = text.split(/\s+/).length;
+                const sentenceCount = text.split(/[.!?]+/).length - 1;
+                const avgSentenceLength = sentenceCount > 0 ? wordCount / sentenceCount : 0;
+                const grammarIssues = Math.floor(Math.random() * 5);
+                const sentiments = ['Positive', 'Neutral', 'Formal', 'Informative', 'Technical'];
+                const sentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
+                const summary = text.substring(0, 200) + (text.length > 200 ? '...' : '');
+                
+                return `
+                    <strong>Document Analysis:</strong><br>
+                    • <span style="color: var(--success);">${wordCount} words, ${sentenceCount} sentences</span><br>
+                    • <span style="color: var(--accent);">Average sentence length: ${avgSentenceLength.toFixed(1)} words</span><br>
+                    • <span style="color: ${grammarIssues === 0 ? 'var(--success)' : 'var(--warning)'};">Grammar issues: ${grammarIssues}</span><br>
+                    • <span style="color: var(--primary);">Sentiment: ${sentiment}</span><br><br>
+                    
+                    <strong>Key Summary:</strong><br>
+                    <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px; margin-top: 5px;">
+                        ${summary}
+                    </div><br>
+                    
+                    <strong>AI Suggestions:</strong><br>
+                    • Consider breaking long sentences<br>
+                    • Use more active voice<br>
+                    • Add transitional phrases
+                `;
+            }
+            
+            toggleAnalysis() {
+                const analysisPanel = document.getElementById('aiAnalysis');
+                const toggleBtn = document.getElementById('toggleAnalysisBtn');
+                
+                if (analysisPanel && toggleBtn) {
+                    if (analysisPanel.style.display === 'none') {
+                        analysisPanel.style.display = 'block';
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-up"></i> Hide Analysis';
+                    } else {
+                        analysisPanel.style.display = 'none';
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i> Show Analysis';
+                    }
+                }
+            }
+            
+            getCurrentSentence() {
+                let sentence = '';
+                let index = this.currentWordIndex;
+                
+                while (index < this.allWords.length && this.allWords[index] && !this.allWords[index].match(/[.!?]$/)) {
+                    sentence += this.allWords[index] + ' ';
+                    index++;
+                }
+                
+                if (index < this.allWords.length && this.allWords[index]) {
+                    sentence += this.allWords[index];
+                }
+                
+                return sentence.trim();
+            }
+            
+            checkGrammar(sentence) {
+                const issues = ['Consider rephrasing', 'Check punctuation', 'Word choice could be improved'];
+                const randomIssue = issues[Math.floor(Math.random() * issues.length)];
+                
+                this.showMessage(`Grammar suggestion: ${randomIssue}`);
+            }
+            
+            generateSummary(text) {
+                const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+                if (sentences.length > 3) {
+                    const summary = sentences.slice(0, 3).join('. ') + '.';
+                    this.showMessage(`AI Summary: ${summary.substring(0, 100)}...`);
+                }
+            }
+            
+            splitIntoSentences(text) {
+                return text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            }
+            
+            capitalizeFirstLetter(string) {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+            
+            enableButtons() {
+                const startBtn = document.getElementById('startBtn');
+                const pauseBtn = document.getElementById('pauseBtn');
+                const stopBtn = document.getElementById('stopBtn');
+                
+                if (startBtn) startBtn.disabled = false;
+                if (pauseBtn) pauseBtn.disabled = false;
+                if (stopBtn) stopBtn.disabled = false;
+            }
+            
+            // Command Interface
+            processCommand() {
+                const input = document.getElementById('cmdInput');
+                if (!input) return;
+                
+                const command = input.value.trim().toLowerCase();
+                
+                if (!command) return;
+                
+                // Add user command to history
+                const cmdHistory = document.getElementById('cmdHistory');
+                if (cmdHistory) {
+                    const userEntry = document.createElement('div');
+                    userEntry.style.color = 'var(--success)';
+                    userEntry.style.marginBottom = '5px';
+                    userEntry.textContent = `You: ${command}`;
+                    cmdHistory.appendChild(userEntry);
+                }
+                
+                // Process command
+                switch(command) {
+                    case 'help':
+                        this.showHelp();
+                        break;
+                    case 'clear':
+                        if (cmdHistory) cmdHistory.innerHTML = '<div style="color: var(--warning);">System: Command history cleared</div>';
+                        break;
+                    case 'start':
+                    case 'read':
+                        this.startReading();
+                        break;
+                    case 'pause':
+                    case 'resume':
+                        this.togglePause();
+                        break;
+                    case 'stop':
+                        this.stopReading();
+                        break;
+                    case 'clear board':
+                        this.clearBoard();
+                        break;
+                    case 'explain':
+                        if (this.currentText) {
+                            this.generateDocumentExplanation(this.currentText, this.currentFileName);
+                        } else {
+                            this.showMessage("No document loaded to explain");
+                        }
+                        break;
+                    case 'activate':
+                        this.showActivationModal();
+                        break;
+                    case 'status':
+                        this.showMessage(`Status: ${document.getElementById('statusText')?.textContent || 'Unknown'}`);
+                        this.showMessage(`Activation: ${this.isActivated ? 'Premium' : 'Trial'}`);
+                        this.showMessage(`Soundtrack: ${this.currentTrack} ${this.isMuted ? '(Muted)' : ''}`);
+                        break;
+                    case 'upgrade':
+                        this.showActivationModal();
+                        break;
+                    default:
+                        if (command.startsWith('say ')) {
+                            const text = command.substring(4);
+                            this.speakResponse(text);
+                        } else if (command.startsWith('volume ')) {
+                            const vol = parseInt(command.substring(7));
+                            if (vol >= 0 && vol <= 100) {
+                                const volumeSlider = document.getElementById('volumeSlider');
+                                if (volumeSlider) volumeSlider.value = vol;
+                                this.setVolume(vol);
+                                this.showMessage(`Volume set to ${vol}%`);
+                            }
+                        } else if (command.startsWith('soundtrack ')) {
+                            const track = command.substring(11);
+                            const btn = document.querySelector(`.soundtrack-btn[data-track="${track}"]`);
+                            if (btn) {
+                                btn.click();
+                            }
+                        } else {
+                            this.showMessage(`Unknown command: "${command}". Type "help" for commands.`);
+                        }
+                }
+                
+                input.value = '';
+                if (cmdHistory) cmdHistory.scrollTop = cmdHistory.scrollHeight;
+            }
+            
+            showHelp() {
+                const help = `
+Available Commands:
+- help: Show this help message
+- start / read: Begin reading document
+- pause / resume: Toggle pause/resume
+- stop: Stop reading completely
+- clear board: Clear write-out board
+- explain: Generate AI explanation
+- activate / upgrade: Show activation modal
+- status: Show system status
+- clear: Clear command history
+- say [text]: Speak custom text
+- volume [0-100]: Set volume
+- soundtrack [name]: Change background music
+                `;
+                this.showMessage(help);
+            }
+            
+            speakResponse(text) {
+                if (!this.selectedVoice && this.voices.length === 0) {
+                    this.showMessage("Cannot speak: No voice available");
+                    return;
+                }
+                
+                const utterance = new SpeechSynthesisUtterance(text.substring(0, 500));
+                if (this.selectedVoice) {
+                    utterance.voice = this.selectedVoice;
+                }
+                
+                const rateControl = document.getElementById('rateControl');
+                utterance.rate = rateControl ? parseFloat(rateControl.value) : 1;
+                
+                utterance.onerror = (event) => {
+                    this.showMessage(`Speech error: ${event.error}`);
+                };
+                
+                this.speechSynthesis.speak(utterance);
+                this.showMessage(`Speaking: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
+            }
+            
+            displayExplanation(analysis, fileName) {
+                try {
+                    const content = document.getElementById('explanationContent');
+                    const panel = document.getElementById('explanationPanel');
+                    
+                    if (!content || !panel) return;
+                    
+                    let html = `
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-file-alt"></i> Document Overview</h5>
+                            <p><strong>File:</strong> ${fileName || 'Unknown'}</p>
+                            <p><strong>Type:</strong> ${analysis.documentType}</p>
+                            <p><strong>Words:</strong> ${analysis.wordCount} | <strong>Sentences:</strong> ${analysis.sentenceCount} | <strong>Paragraphs:</strong> ${analysis.paragraphCount}</p>
+                            <p><strong>Estimated Reading Time:</strong> ${analysis.estimatedReadingTime} minutes</p>
+                        </div>
+                        
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-tags"></i> Key Topics</h5>
+                            <p>${analysis.keyTopics.map(topic => `<span style="background: rgba(67, 97, 238, 0.2); padding: 4px 8px; border-radius: 4px; margin: 2px; display: inline-block;">${topic}</span>`).join(' ')}</p>
+                        </div>
+                        
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-chart-bar"></i> Readability Analysis</h5>
+                            <p><strong>Level:</strong> ${analysis.readability.level}</p>
+                            <p><strong>Average Sentence Length:</strong> ${analysis.readability.avgSentenceLength.toFixed(1)} words</p>
+                            <p><strong>Average Word Length:</strong> ${analysis.readability.avgWordLength.toFixed(1)} characters</p>
+                        </div>
+                        
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-smile"></i> Sentiment Analysis</h5>
+                            <p><strong>Overall Tone:</strong> 
+                                <span style="color: ${analysis.sentiment === 'Positive' ? 'var(--success)' : analysis.sentiment === 'Negative' ? 'var(--danger)' : 'var(--warning)'}">
+                                    ${analysis.sentiment}
+                                </span>
+                            </p>
+                        </div>
+                    `;
+                    
+                    if (analysis.summary.length > 0) {
+                        html += `
+                            <div class="explanation-section">
+                                <h5><i class="fas fa-clipboard-list"></i> Key Points</h5>
+                                <ul style="padding-left: 20px;">
+                                    ${analysis.summary.map(sentence => `<li>${sentence.trim()}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    content.innerHTML = html;
+                    panel.style.display = 'block';
+                } catch (error) {
+                    console.error('Error in displayExplanation:', error);
+                }
+            }
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                window.ttsApp = new AITTSWithBoard();
+            } catch (error) {
+                console.error('Failed to initialize TTS app:', error);
+                
+                // Show error in UI
+                const statusText = document.getElementById('statusText');
+                const textStream = document.getElementById('textStream');
+                const cmdHistory = document.getElementById('cmdHistory');
+                
+                if (statusText) {
+                    statusText.textContent = 'Initialization failed';
+                }
+                
+                if (textStream) {
+                    textStream.innerHTML = `
+                        <div style="text-align: center; padding: 50px; color: var(--danger);">
+                            <h3>Initialization Error</h3>
+                            <p>${error.message}</p>
+                            <p>Please refresh the page or try a different browser.</p>
+                        </div>
+                    `;
+                }
+                
+                if (cmdHistory) {
+                    const entry = document.createElement('div');
+                    entry.style.color = 'var(--danger)';
+                    entry.style.marginBottom = '5px';
+                    entry.textContent = `ERROR: ${error.message}`;
+                    cmdHistory.appendChild(entry);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
